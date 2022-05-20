@@ -1,0 +1,5 @@
+background 1 1 1
+camera 0 0 0 0 0 0
+sphere 0 0 6 2 1 1 0 0.2 10
+ambientLight 0.25
+pointLight 2 -1.7 2 0.5
