@@ -1,4 +1,5 @@
 # C++ Final Project
+![scene2_1024x1024](https://user-images.githubusercontent.com/56323496/169605083-33034877-3208-417b-9735-87c5aed1afd7.png)
 
 ## Description
 For my final project, I wrote a simple ray tracing program.
