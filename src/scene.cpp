@@ -9,6 +9,7 @@
 
 #include "scene.h"
 #include <iostream>
+#include <limits>
 #include <string>
 
 using namespace std;
@@ -126,7 +127,7 @@ void Scene::Render(uint32_t *pixels, int w, int h)
 
 //
 // Function:    Scene::TraceRay
-// Parameters:  Ray, max and min t, recusion limit
+// Parameters:  Ray, max and min t, recursion limit
 // Returns:     Result color
 // Description: Trace a light ray's path and find the resulting color
 //
