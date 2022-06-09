@@ -1,0 +1,9 @@
+background 0.298 0.369 0.439
+camera 0 0 0 0 0 0
+camera 0 6 16 180 30 0
+sphere 2 0 6 1 0 1 1 0.3 500
+sphere -2 0 6 1 1 0 0 0.1 10
+sphere 0 0 10 1 1 0 1 0.2 10
+ambientLight 0.2
+pointLight 5 4 5.5 0.3
+pointLight 0 -4 5.5 0.3

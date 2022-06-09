@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <fstream>
 #include <vector>
+#include <memory>
 #include "sphere.h"
 #include "point_light.h"
 
@@ -20,17 +21,16 @@ class Scene
 {
 public:
     bool LoadFromFile(std::ifstream &file);
-    void Render(uint32_t *pixels, int w, int h);
+    void Render(std::vector<std::unique_ptr<uint32_t>> &buffers, int w, int h);
 private:
-    Vec3 camPos;
-    float camYaw = 0.0f, camPitch = 0.0f, camRoll = 0.0f;
+    std::vector<std::tuple<Vec3, float, float, float>> cameras;
     Vec4 bgColor;
     float ambientLightIntensity = 0.0f;
     std::vector<Sphere> spheres;
     std::vector<PointLight> pointLights;
 
     Vec4 TraceRay(Vec3 rayOrigin, Vec3 rayDir, float tMin, float tMax, unsigned recurLimit = 3);
-    float ComputeLighting(Sphere *sphere, Vec3 position, Vec3 normal);
+    float ComputeLighting(Vec3 camPos, Sphere *sphere, Vec3 position, Vec3 normal);
     std::tuple<Sphere *, Vec3> NearestSphere(Vec3 rayOrigin, Vec3 rayDir, float tMin, float tMax);
 };
 

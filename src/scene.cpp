@@ -59,10 +59,7 @@ bool Scene::LoadFromFile(std::ifstream &file)
             } else if (command == "camera") {
                 float x, y, z, yaw, pitch, roll;
                 file >> x >> y >> z >> yaw >> pitch >> roll;
-                this->camPos = Vec3(x, y, z);
-                this->camYaw = yaw;
-                this->camPitch = pitch;
-                this->camRoll = roll;
+                this->cameras.emplace_back(Vec3(x, y, z), Radians(yaw), Radians(pitch), Radians(roll));
             } else if (command == "sphere") {
                 float radius, x, y, z, r, g, b;
                 float refl;
@@ -97,31 +94,33 @@ bool Scene::LoadFromFile(std::ifstream &file)
 // Returns:     None
 // Description: Render the scene to the pixel buffer
 //
-void Scene::Render(uint32_t *pixels, int w, int h)
+void Scene::Render(vector<unique_ptr<uint32_t>> &buffers, int w, int h)
 {
-    float yaw = Radians(this->camYaw);
-    float pitch = Radians(this->camPitch);
-    float roll = Radians(this->camRoll);
-    for (int y = -h/2; y < h/2; ++y) {
-        for (int x = -w/2; x < w/2; ++x) {
-            Vec3 rayDir(float(x)/float(w), float(y)/float(h), 1.0f);
-            // Rotate rayDir
-            rayDir = rayDir.x * Vec3( cosf(roll), sinf(roll), 0.0f)
-                   + rayDir.y * Vec3(-sinf(roll), cosf(roll), 0.0f)
-                   + rayDir.z * Vec3(0.0f, 0.0f, 1.0f);
-            rayDir = rayDir.x * Vec3(1.0f, 0.0f, 0.0f)
-                   + rayDir.y * Vec3(0.0f,  cosf(pitch), sinf(pitch))
-                   + rayDir.z * Vec3(0.0f, -sinf(pitch), cosf(pitch));
-            rayDir = rayDir.x * Vec3(cosf(yaw), 0.0f, -sinf(yaw))
-                   + rayDir.y * Vec3(0.0f, 1.0f, 0.0f)
-                   + rayDir.z * Vec3(sinf(yaw), 0.0f,  cosf(yaw));
-            Vec4 color = this->TraceRay(this->camPos, rayDir, 1.0f, numeric_limits<float>::infinity());
-            uint32_t pixel = Vec4ToUint32(color);
-            int xPx = x + (w/2);
-            int yPx = h - (y + (h/2)) - 1;
-            pixels[(yPx * w) + xPx] = pixel;
+    for (auto c : this->cameras) {
+        Vec3 pos;
+        float yaw, pitch, roll;
+        std::tie(pos, yaw, pitch, roll) = c;
+        buffers.emplace_back(new uint32_t[size_t(w) * size_t(h)]);
+        for (int y = -h / 2; y < h / 2; ++y) {
+            for (int x = -w / 2; x < w / 2; ++x) {
+                Vec3 rayDir(float(x) / float(w), float(y) / float(h), 1.0f);
+                // Rotate rayDir
+                rayDir = rayDir.x * Vec3(cosf(roll), sinf(roll), 0.0f)
+                         + rayDir.y * Vec3(-sinf(roll), cosf(roll), 0.0f)
+                         + rayDir.z * Vec3(0.0f, 0.0f, 1.0f);
+                rayDir = rayDir.x * Vec3(1.0f, 0.0f, 0.0f)
+                         + rayDir.y * Vec3(0.0f, cosf(pitch), sinf(pitch))
+                         + rayDir.z * Vec3(0.0f, -sinf(pitch), cosf(pitch));
+                rayDir = rayDir.x * Vec3(cosf(yaw), 0.0f, -sinf(yaw))
+                         + rayDir.y * Vec3(0.0f, 1.0f, 0.0f)
+                         + rayDir.z * Vec3(sinf(yaw), 0.0f, cosf(yaw));
+                Vec4 color = this->TraceRay(pos, rayDir, 1.0f, numeric_limits<float>::infinity());
+                uint32_t pixel = Vec4ToUint32(color);
+                int xPx = x + (w / 2);
+                int yPx = h - (y + (h / 2)) - 1;
+                buffers.back().get()[(yPx * w) + xPx] = pixel;
+            }
         }
-
     }
 }
 
@@ -138,7 +137,7 @@ Vec4 Scene::TraceRay(Vec3 rayOrigin, Vec3 rayDir, float tMin, float tMax, unsign
     std::tie(sphere, intersect) = this->NearestSphere(rayOrigin, rayDir, tMin, tMax);
     if (sphere) {
         Vec3 normal = Normalize(intersect - sphere->GetCenter());
-        float intensity = this->ComputeLighting(sphere, intersect, normal);
+        float intensity = this->ComputeLighting(rayOrigin, sphere, intersect, normal);
         Vec4 color = sphere->GetColor() * Clamp(intensity, 0.0f, 1.0f);
         if (sphere->GetReflectivity() > 0.0f && recurLimit > 0) {
             Vec4 reflection = this->TraceRay(intersect, Normalize(Reflect(-rayDir, normal)),
@@ -156,7 +155,7 @@ Vec4 Scene::TraceRay(Vec3 rayOrigin, Vec3 rayDir, float tMin, float tMax, unsign
 // Returns:     Light intensity
 // Description: Compute lighting for a position on a sphere
 //
-float Scene::ComputeLighting(Sphere *sphere, Vec3 position, Vec3 normal)
+float Scene::ComputeLighting(Vec3 camPos, Sphere *sphere, Vec3 position, Vec3 normal)
 {
     int shininess = sphere->GetShininess();
     float intensity = this->ambientLightIntensity;
@@ -174,7 +173,7 @@ float Scene::ComputeLighting(Sphere *sphere, Vec3 position, Vec3 normal)
                 intensity += l.GetIntensity() * (nl/dist);
             }
             // Specular
-            Vec3 pc = this->camPos - position;
+            Vec3 pc = camPos - position;
             if (shininess >= 0) {
                 Vec3 reflDir = (2.0f * normal * Dot(normal, pl)) - pl;
                 float c = Dot(reflDir, pc);

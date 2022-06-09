@@ -8,6 +8,8 @@ and spheres. The resulting image is output to a .bmp file. The
 code is written in standard C++ and doesn't use any third party
 libraries.
 
+This repository also contains some extra features added after finals.
+
 ## Compiling
 You'll need to install premake5, which you can get [here](https://premake.github.io/). 
 Once installed, you can use it to output the project files for your dev environment.

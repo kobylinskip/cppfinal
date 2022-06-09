@@ -69,22 +69,25 @@ int main()
     res = Resolution(choice);
 
     // Render the scene
+    std::vector<unique_ptr<uint32_t>> buffers;
     int w = ResToDim(res);
     int h = w;
     cout << "Rendering scene at " << ResToString(res) << "..." << endl;
-    unique_ptr<uint32_t[]> bitmap(new uint32_t[size_t(w) * size_t(h)]);
-    scene.Render(bitmap.get(), w, h);
+    scene.Render(buffers, w, h);
 
     // Output to BMP file
-    string bmpPath = scenePath.substr(0, scenePath.find_last_of(".")) + "_" + ResToString(res) + ".bmp";
-    cout << "Outputting result to " << bmpPath << "..." << endl;
-    ofstream bmpFile(bmpPath, ios_base::binary);
-    if (!bmpFile.is_open()) {
-        cerr << "Error: Could not open " << bmpPath << " for writing" << endl;
-        return -2;
+    for (size_t i = 0; i < buffers.size(); ++i) {
+        string cam = buffers.size() > 1 ? "_cam" + std::to_string(i) : "";
+        string bmpPath = scenePath.substr(0, scenePath.find_last_of(".")) + "_" + ResToString(res) + cam + ".bmp";
+        cout << "Outputting result to " << bmpPath << "..." << endl;
+        ofstream bmpFile(bmpPath, ios_base::binary);
+        if (!bmpFile.is_open()) {
+            cerr << "Error: Could not open " << bmpPath << " for writing" << endl;
+            return -2;
+        }
+        WriteBMP(bmpFile, buffers[i].get(), w, h);
+        bmpFile.close();
     }
-    WriteBMP(bmpFile, bitmap.get(), w, h);
-    bmpFile.close();
 
     cout << "Finished!" << endl;
     return 0;
