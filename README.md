@@ -10,7 +10,17 @@ libraries.
 
 This repository also contains some extra features added after finals.
 
-## Compiling
+## Building via CMake
+Install CMake from [here](https://cmake.org/) and enter the following commands
+in the project's root folder:
+```
+mkdir build
+cd build
+cmake ..
+```
+CMake will automatically generate the necessary files for a dev environment appropriate for your platform.
+
+## Building via Premake
 You'll need to install premake5, which you can get [here](https://premake.github.io/). 
 Once installed, you can use it to output the project files for your dev environment.
 For example, in the project's root folder on Windows:
