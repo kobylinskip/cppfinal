@@ -60,7 +60,7 @@ int main()
     while (true) {
         cout << "What resolution do you wish to render at? ";
         cin >> choice;
-        if (choice < 1 || choice > 6) {
+        if (choice < 1 || choice > 5) {
             cout << "Invalid resolution, choose a number 1 through 5." << endl;
         } else {
             break;
